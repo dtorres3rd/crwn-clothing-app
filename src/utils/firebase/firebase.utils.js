@@ -28,7 +28,10 @@ export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
 
 export const db = getFirestore();
 
-export const createUserDocumentFromAuth = async (userAuth) => {
+export const createUserDocumentFromAuth = async (
+    userAuth,
+    additionalInformation = { displayName: 'Customer' }
+) => {
     if (!userAuth) return;
 
     const userDocRef = doc(db, 'users', userAuth.uid);
@@ -44,7 +47,8 @@ export const createUserDocumentFromAuth = async (userAuth) => {
             await setDoc(userDocRef, {
                 displayName,
                 email,
-                createdAt
+                createdAt,
+                ...additionalInformation //if displayName is null, overwrite will happen and default value will be used. value = Customer
             });
         } catch (error) {
             console.log('error creating user', error.message);
@@ -57,5 +61,5 @@ export const createUserDocumentFromAuth = async (userAuth) => {
 export const createAuthUserWithEmailAndPassword = async (email, password) => {
     if (!email || !password) return;
 
-    createUserWithEmailAndPassword(auth, email, password)
+    return await createUserWithEmailAndPassword(auth, email, password)
 };
