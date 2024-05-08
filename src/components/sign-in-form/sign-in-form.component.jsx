@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useContext } from 'react';
 
-import FormInput from "../form-input/form-input.component";
-import Button from "../button/button.component";
+import FormInput from '../form-input/form-input.component';
+import Button, { BUTTON_TYPE_CLASSES } from '../button/button.component';
+import { UserContext } from '../../contexts/user.context';
+
+import { signInWithGooglePopup, signInAuthUserWithEmailAndPassword } from "../../utils/firebase/firebase.utils";
 
 import './sign-in-form.styles.scss'
-
-import { signInWithGooglePopup, createUserDocumentFromAuth, signInAuthUserWithEmailAndPassword } from "../../utils/firebase/firebase.utils";
 
 const defaultFormFields = {
     email: '',
@@ -18,33 +19,39 @@ const SignInForm = () => {
 
     // console.log(formFields); // good for monitoring state fields
 
+    const { setCurrentUser } = useContext(UserContext);
+
     const resetFormFields = () => {
         setFormFields(defaultFormFields);
     };
 
     const signInWithGoogle = async () => {
         const { user } = await signInWithGooglePopup();
-
-        await createUserDocumentFromAuth(user);
+        setCurrentUser(user);
     };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
 
         try {
-            const response = await signInAuthUserWithEmailAndPassword(email, password);
-            console.log(response);
-            resetFormFields();
+            const { user } = await signInAuthUserWithEmailAndPassword(email, password);
 
+            resetFormFields();
+            setCurrentUser(user);
         } catch (error) {
             switch (error.code) {
-                case 'auth/invalid-credential':
-                    alert('Incorrect credential');
+                case 'auth/wrong-password':
+                    alert('invalid credentials');
+                    break;
+                case 'auth/user-not-found':
+                    alert('invalid credentials');
+                    break;
+                case 'auth/invalid-login-credentials':
+                    alert('invalid credentials');
                     break;
                 default:
                     console.log(error);
-            };
-
+            }
         };
     };
 
@@ -66,11 +73,11 @@ const SignInForm = () => {
 
                 <div className="buttons-container">
                     <Button type='submit'>Sign In</Button>
-                    <Button type='button' buttonType='google' onClick={signInWithGoogle}>Google sign in</Button>
+                    <Button type='button' buttonType={BUTTON_TYPE_CLASSES.google} onClick={signInWithGoogle}>Sign in with Google</Button>
                 </div>
             </form>
         </div>
     );
 };
 
-export default SignInForm
+export default SignInForm;
