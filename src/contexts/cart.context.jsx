@@ -1,28 +1,48 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 
 const addCartItem = (cartItems, productToAdd) => {
     // find if cartItems contains productToAdd
+    const existingCartItem = cartItems.find((cartItem) => cartItem.id === productToAdd.id);
 
-    // if found, increment quantity
+    // checker: if found same item, increment quantity or create new item to include product
+    if (existingCartItem) {
+        return cartItems.map((cartItem) => cartItem.id === productToAdd.id
+            // if true, new array
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            // else
+            : cartItem
+        );
+    }
 
     // return new array with modified cartItems/ new cart item
+    return [...cartItems, {...productToAdd, quantity:1}];
 }
 
 export const CartContext = createContext({
     isCartOpen: false,
     setIsCartOpen: () => {},
     cartItems: [],
-    addItemToCart: () => {}
+    addItemToCart: () => {},
+    cartCount: 0
 });
 
 export const CartProvider = ({ children }) => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [cartItems, setCartItems] = useState([]);
-    const value = { isCartOpen, setIsCartOpen };
+    const [cartCount, setCartCount] = useState(0);
+
+    // useEffect runs when something in the dependency array - cartItems array changes
+    useEffect(() =>{
+        // pseudo code: parameters of callback: total and cartItem
+        const newCartCount = cartItems.reduce((total, cartItem) => total + cartItem.quantity, 0);
+        setCartCount(newCartCount);
+    }, [cartItems])
 
     const addItemToCart = (productToAdd) => {
         setCartItems(addCartItem(cartItems, productToAdd));
     }
+    // expose values to be used as context = CartContext props
+    const value = { isCartOpen, setIsCartOpen, addItemToCart, cartItems, cartCount };
 
     return <CartContext.Provider value={value} >{children}</CartContext.Provider>;
 };
