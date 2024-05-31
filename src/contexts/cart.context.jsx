@@ -15,14 +15,34 @@ const addCartItem = (cartItems, productToAdd) => {
     }
 
     // return new array with modified cartItems/ new cart item
-    return [...cartItems, {...productToAdd, quantity:1}];
-}
+    return [...cartItems, { ...productToAdd, quantity: 1 }];
+};
+
+// create another helper for remove cart item
+const removeCartItem = (cartItems, cartItemRemove) => {
+    // pseudo: find cart item to remove
+    const existingCartItem = cartItems.find((cartItem) => cartItem.id === cartItemRemove.id);
+
+    // pseudo: check current selected item quantity is equal to 1, if true, remove item from cart
+    if (existingCartItem.quantity === 1) {
+        return cartItems.filter(cartItem => cartItem.id !== cartItemRemove.id);
+    }
+
+    // pseudo: if not, return cart item with reduced quantity
+    return cartItems.map((cartItem) => cartItem.id === cartItemRemove.id
+        // if true, new array
+        ? { ...cartItem, quantity: cartItem.quantity - 1 }
+        // else
+        : cartItem
+    );
+};
 
 export const CartContext = createContext({
     isCartOpen: false,
-    setIsCartOpen: () => {},
+    setIsCartOpen: () => { },
     cartItems: [],
-    addItemToCart: () => {},
+    addItemToCart: () => { },
+    removeItemToCart: () => { },
     cartCount: 0
 });
 
@@ -32,7 +52,7 @@ export const CartProvider = ({ children }) => {
     const [cartCount, setCartCount] = useState(0);
 
     // useEffect runs when something in the dependency array - cartItems array changes
-    useEffect(() =>{
+    useEffect(() => {
         // pseudo code: parameters of callback: total and cartItem
         const newCartCount = cartItems.reduce((total, cartItem) => total + cartItem.quantity, 0);
         setCartCount(newCartCount);
@@ -41,8 +61,13 @@ export const CartProvider = ({ children }) => {
     const addItemToCart = (productToAdd) => {
         setCartItems(addCartItem(cartItems, productToAdd));
     }
+
+    const removeItemToCart = (cartItemToRemove) => {
+        setCartItems(removeCartItem(cartItems, cartItemToRemove));
+    }
+
     // expose values to be used as context = CartContext props
-    const value = { isCartOpen, setIsCartOpen, addItemToCart, cartItems, cartCount };
+    const value = { isCartOpen, setIsCartOpen, addItemToCart, removeItemToCart, cartItems, cartCount };
 
     return <CartContext.Provider value={value} >{children}</CartContext.Provider>;
 };
